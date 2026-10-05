@@ -1,0 +1,10 @@
+{
+  "name": "NTalk",
+  "short_name": "NTalk",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#090d21",
+  "theme_color": "#11152f",
+  "description": "NTalk messaging app",
+  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

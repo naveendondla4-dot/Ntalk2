@@ -1,0 +1,20 @@
+NTalk Advanced - Quick Setup
+
+1. Open Supabase SQL Editor and run supabase.sql.
+2. Open config.js and paste:
+   SUPABASE_URL = your project URL
+   SUPABASE_ANON_KEY = your browser-safe Publishable/Anon key
+3. Do NOT use a service_role/secret key.
+4. Upload ALL files from this folder to the ROOT of your GitHub repository.
+5. Enable GitHub Pages from repository Settings -> Pages.
+6. Open the HTTPS GitHub Pages URL.
+7. Register two accounts on two devices/browsers.
+8. Give unique usernames, e.g. naveen and rahul.
+9. Start a chat, send messages, upload media, test typing/online/seen.
+10. Test voice/video calls. If mobile NAT blocks calls, configure TURN in config.js.
+
+Install:
+Profile -> Install NTalk. If the browser does not show the native prompt, use browser menu -> Install app/Add to Home screen.
+
+Security:
+Only put the Supabase Publishable/Anon key in config.js. Never expose a service_role/secret key.
