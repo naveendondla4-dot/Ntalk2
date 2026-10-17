@@ -1,18 +1,9 @@
 {
-  "id": "./",
-  "name": "NTalk",
-  "short_name": "NTalk",
-  "description": "NTalk - private real-time chat",
-  "start_url": "./",
-  "scope": "./",
-  "display": "standalone",
-  "orientation": "any",
-  "background_color": "#0b1026",
-  "theme_color": "#111b68",
-  "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
-  ]
+  "name":"NTalk",
+  "short_name":"NTalk",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#0b1026",
+  "theme_color":"#111b68",
+  "icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }

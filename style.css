@@ -267,3 +267,216 @@ nav .ui-icon{width:20px;height:20px}.head-actions .ui-icon{width:18px;height:18p
   .chat-row{padding:12px 8px}
   .chat-list{padding-top:14px}
 }
+
+/* ---- NTalk additions: groups, modal, toast, sender name ---- */
+.avatar .ui-icon{width:22px;height:22px}
+.avatar.group{background:linear-gradient(135deg,var(--accent3),var(--accent))}
+.avatar.sm{width:34px;height:34px;min-width:34px;font-size:14px}
+.sender-name{display:block;font-size:11px;color:var(--cyan);margin-bottom:3px}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+.modal{width:100%;max-width:400px;max-height:85dvh;display:flex;flex-direction:column;gap:10px;background:var(--panel-solid);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.modal h3{margin:0;font-size:18px}
+.modal .muted{margin:0;color:var(--muted);font-size:12px}
+.modal input#groupName{padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel-soft);color:var(--text);outline:none}
+.pick-list{overflow:auto;display:flex;flex-direction:column;gap:4px;min-height:60px}
+.pick-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;cursor:pointer;color:var(--text)}
+.pick-row:hover{background:var(--panel-hover)}
+.pick-row input{width:18px;height:18px;accent-color:var(--accent)}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.modal-actions button{padding:10px 18px;border-radius:12px;font-weight:700}
+.m-cancel{background:var(--panel-soft);color:var(--muted)}
+.m-ok{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.toast{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:12px;right:12px;max-width:420px;margin:0 auto;z-index:300;display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:14px;background:var(--panel-solid);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--text);cursor:pointer}
+.toast span{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick-row .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-danger{background:transparent;color:var(--danger);font-weight:700;padding:8px 12px;border-radius:10px}
+.m-add{background:var(--panel-soft);color:var(--accent2);font-weight:700;padding:10px 12px;border-radius:12px;text-align:left}
+.m-link{background:transparent;color:var(--accent2);font-size:12px;font-weight:700;padding:2px 6px}
+.modal h3{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* ---- profile photo, calls list, media viewer ---- */
+.avatar img,.profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.profile-avatar-wrap{position:relative;display:inline-block;cursor:pointer}
+.avatar-edit{position:absolute;right:-2px;bottom:-2px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:2px solid var(--bg)}
+.avatar-edit .ui-icon{width:18px;height:18px}
+.m-input{padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel-soft);color:var(--text);outline:none}
+.call-row{cursor:default}
+.call-actions{display:flex;gap:8px;margin-left:auto}
+.call-actions button{width:44px;height:44px;border-radius:50%;background:var(--panel-soft);color:var(--accent2);display:grid;place-items:center}
+.call-actions .ui-icon{width:20px;height:20px}
+.media-load{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--panel-soft);color:var(--text);text-align:left}
+.media-load small{color:var(--muted)}
+video.media{max-width:100%;border-radius:12px}
+.media{cursor:pointer}
+.media-view{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:12px}
+.media-view img{max-width:100%;max-height:88dvh;border-radius:8px}
+.mv-close{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:14px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:18px}
+.mv-save{position:absolute;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:999px;background:rgba(255,255,255,.18);color:#fff;font-weight:700;text-decoration:none}
+
+/* ===== NTalk features: ticks, reply, status, story, profile card ===== */
+.tick{margin-left:3px;font-size:11px;letter-spacing:-2px;color:rgba(255,255,255,.6)}
+.tick.seen{color:#4ade80;font-weight:700}
+.bubble{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.bubble.flash{animation:flashMsg 1.2s ease}
+@keyframes flashMsg{0%,100%{filter:none}30%{filter:brightness(1.55)}}
+.quote{display:block;border-left:3px solid #4ade80;background:rgba(0,0,0,.18);border-radius:8px;padding:5px 8px;margin-bottom:6px;cursor:pointer;max-width:100%}
+.quote b{display:block;font-size:11px;color:#4ade80}
+.quote span{display:block;font-size:12px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reply-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--panel-solid);border-top:1px solid var(--line)}
+.reply-bar .rb-body{flex:1;min-width:0;border-left:3px solid var(--accent2);padding-left:8px}
+.reply-bar b{display:block;font-size:12px;color:var(--accent2)}
+.reply-bar span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reply-bar button{background:transparent;color:var(--muted);font-size:20px;padding:4px 8px}
+.chat-head .avatar,.chat-head .hd-name{cursor:pointer}
+.menu-btn{display:block;width:100%;text-align:left;padding:14px 12px;border-radius:12px;background:var(--panel-soft);color:var(--text);font-weight:600;margin-bottom:6px}
+/* profile card */
+.pc-photo{width:100%;max-width:260px;aspect-ratio:1/1;object-fit:cover;border-radius:20px;display:block;margin:0 auto;cursor:pointer}
+.pc-letter{width:100%;max-width:260px;aspect-ratio:1/1;border-radius:20px;margin:0 auto;display:grid;place-items:center;font-size:90px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.pc-name{text-align:center;margin:6px 0 0;font-size:20px}
+.pc-sub{text-align:center;margin:0;color:var(--muted);font-size:13px}
+.pc-seen{text-align:center;margin:4px 0 0;color:var(--success);font-size:13px}
+/* status row */
+.st-row{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:6px;scrollbar-width:none}
+.st-row::-webkit-scrollbar{display:none}
+.st-item{flex:0 0 auto;width:62px;text-align:center;cursor:pointer;position:relative}
+.st-item span.nm{display:block;margin-top:4px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-ring{width:58px;height:58px;border-radius:50%;padding:3px;box-sizing:border-box;border:2px solid var(--line);margin:0 auto}
+.st-ring.unseen{border-color:#22c55e}
+.st-ring.seen{border-color:#8a8d98}
+.st-ring .avatar{width:100%;height:100%;min-width:0;font-size:20px}
+.st-plus{position:absolute;right:2px;top:36px;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:800;font-size:14px;line-height:20px;text-align:center;border:2px solid var(--bg)}
+/* status composer */
+.st-choose{display:flex;gap:10px}
+.st-big{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 8px;border-radius:16px;background:var(--panel-soft);color:var(--text);font-weight:700;cursor:pointer}
+.st-big .ui-icon{width:26px;height:26px}
+.st-preview{width:100%;max-height:300px;object-fit:contain;border-radius:12px;background:#000}
+.st-textarea{width:100%;min-height:150px;border:0;border-radius:14px;padding:16px;color:#fff;font-size:22px;font-weight:700;text-align:center;resize:none;outline:none;box-sizing:border-box}
+.st-textarea::placeholder{color:rgba(255,255,255,.7)}
+.st-colors{display:flex;gap:10px;justify-content:center;padding:4px 0}
+.st-dot{width:28px;height:28px;border-radius:50%;border:2px solid transparent}
+.st-dot.on{border-color:#fff;box-shadow:0 0 0 2px var(--accent2)}
+/* story viewer */
+.story{position:fixed;inset:0;z-index:350;background:#000;color:#fff;display:flex;flex-direction:column;touch-action:manipulation}
+.story-bars{position:absolute;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));display:flex;gap:4px;z-index:3}
+.sbar{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.3);overflow:hidden}
+.sfill{height:100%;width:0;background:#fff}
+.sfill.done{width:100%}
+.sfill.run{animation:sfill 5s linear forwards}
+@keyframes sfill{from{width:0}to{width:100%}}
+.story.paused .sfill.run{animation-play-state:paused}
+.story-head{position:absolute;left:10px;right:10px;top:calc(20px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:10px;z-index:3}
+.story-head .avatar{width:38px;height:38px;min-width:38px;font-size:15px}
+.story-head .who{flex:1;min-width:0}
+.story-head b{display:block;font-size:14px}
+.story-head small{display:block;font-size:11px;opacity:.8}
+.story-head button{background:rgba(255,255,255,.16);color:#fff;width:38px;height:38px;border-radius:50%;font-size:17px}
+.story-body{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.story-body img{max-width:100%;max-height:100%;object-fit:contain}
+.story-text{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box}
+.story-text p{margin:0;font-size:28px;font-weight:700;text-align:center;line-height:1.35;word-break:break-word}
+.story-cap{position:absolute;left:0;right:0;bottom:calc(70px + env(safe-area-inset-bottom,0px));text-align:center;padding:10px 18px;background:linear-gradient(transparent,rgba(0,0,0,.55));z-index:2;font-size:15px}
+.story-hit{position:absolute;inset:70px 0 90px 0;z-index:2}
+.story-seen{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:4;background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:10px 20px;font-weight:700}
+.modal-back.over-story{z-index:500}
+.modal h3.pc-name{justify-content:center}
+.modal .pc-photo,.modal .pc-letter{flex:0 0 auto}
+
+/* ===== NTalk: Google button, call history, group call ===== */
+.g-btn{display:flex;align-items:center;justify-content:center;gap:10px}
+.g-btn svg{width:18px;height:18px;flex:0 0 18px}
+.auth-or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:8px 0}
+.auth-or:before,.auth-or:after{content:"";flex:1;height:1px;background:var(--line)}
+.cl{font-size:12px !important;font-weight:600}
+.cl.in,.cl.out{color:var(--success)}
+.cl.missed,.cl.bad{color:var(--danger)}
+.call-mini{width:38px;height:38px;border-radius:50%;background:var(--panel-soft);color:var(--accent2);display:grid;place-items:center;flex:0 0 38px}
+.call-mini .ui-icon{width:18px;height:18px}
+.empty-small{line-height:1.6}
+.gcall{position:fixed;inset:0;z-index:300;background:#0b0e1a;display:flex;flex-direction:column;color:#fff}
+.gc-top{padding:calc(14px + env(safe-area-inset-top,0px)) 16px 6px;text-align:center}
+.gc-top b{display:block;font-size:17px}
+.gc-top small{color:#aab2c8;font-size:12px}
+.gc-grid{flex:1;min-height:0;display:grid;gap:8px;padding:8px;grid-template-columns:1fr;grid-template-rows:1fr}
+.gc-grid[data-n="2"]{grid-template-rows:1fr 1fr}
+.gc-grid[data-n="3"],.gc-grid[data-n="4"]{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+@media (orientation:landscape){.gc-grid[data-n="2"]{grid-template-columns:1fr 1fr;grid-template-rows:1fr}}
+.gc-tile{position:relative;border-radius:16px;overflow:hidden;background:#1a2036;min-height:0;display:flex;align-items:center;justify-content:center}
+.gc-tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
+.gc-tile.has-video video{opacity:1}
+.gc-av{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.gc-tile.has-video .gc-av{display:none}
+.gc-name{position:absolute;left:8px;bottom:8px;color:#fff;background:rgba(0,0,0,.5);padding:3px 9px;border-radius:8px;font-size:12px;z-index:2}
+.gc-name small{display:block;font-size:10px;opacity:.85}
+.gc-controls{display:flex;justify-content:center;gap:18px;padding:10px 12px calc(18px + env(safe-area-inset-bottom,0px))}
+.gc-controls button{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center}
+.gc-controls button.muted{background:#fff;color:#111}
+.gc-controls button.end{background:#e11d48}
+.gc-controls button .ui-icon{width:22px;height:22px}
+.gc-controls button.end .ui-icon{transform:rotate(135deg)}
+
+/* ===== NTalk: shorts, secret chats, speaker, video status ===== */
+.lh-actions{display:flex;gap:8px;align-items:center}
+.list-head h2.tap{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.ui-icon.filled{fill:currentColor}
+.menu-btn .ui-icon{width:18px;height:18px;vertical-align:-3px;margin-right:6px}
+.call-controls button.on,.gc-controls button.on{background:#fff;color:#111}
+.story-body video{max-width:100%;max-height:100%;object-fit:contain;background:#000}
+.cm-row{display:flex;gap:8px;align-items:center}
+.cm-row .m-input{flex:1;min-width:0}
+.shorts{flex:1;min-width:0;height:100dvh;position:relative;background:#000;color:#fff}
+.shorts-head{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;background:linear-gradient(rgba(0,0,0,.55),transparent)}
+.shorts-head b{font-size:20px}
+.shorts-scroll{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.shorts-scroll::-webkit-scrollbar{display:none}
+.short{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;background:#000}
+.short-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.short-shade{position:absolute;left:0;right:0;bottom:0;height:42%;background:linear-gradient(transparent,rgba(0,0,0,.72));pointer-events:none}
+.short-info{position:absolute;left:14px;right:82px;bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:3}
+.short-user{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.short-user .avatar{width:34px;height:34px;min-width:34px;font-size:14px}
+.short-info p{margin:0;font-size:14px;line-height:1.4;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.short-actions{position:absolute;right:10px;bottom:calc(30px + env(safe-area-inset-bottom,0px));z-index:4;display:flex;flex-direction:column;gap:16px;align-items:center}
+.short-actions button{background:rgba(0,0,0,.35);color:#fff;width:48px;min-height:48px;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;padding:6px 0}
+.short-actions button.liked{color:#ff4d6d}
+.short-actions .ui-icon{width:24px;height:24px}
+.short-msg{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#c8cbe0;line-height:1.7;padding:24px}
+@media(max-width:520px){.shorts{height:calc(100dvh - 68px)}}
+
+/* ===== NTalk: password eye, notes ===== */
+.pw-wrap{position:relative;display:block}
+.pw-wrap input{display:block;width:100%;box-sizing:border-box;padding-right:46px !important}
+.pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:transparent !important;border:0 !important;color:var(--muted);display:grid;place-items:center;padding:0 !important;margin:0 !important;min-height:0}
+.pw-eye svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.chat-row{position:relative}
+.chat-row.has-note{padding-top:32px}
+.note-bub{display:inline-block;max-width:104px;padding:4px 10px;border-radius:14px;background:var(--panel-solid);border:1px solid var(--line);color:var(--text);font-size:11px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.chat-row .note-bub{position:absolute;left:8px;top:6px;z-index:2}
+.st-item.has-note{padding-top:26px}
+.st-item .note-bub{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:2}
+.note-bub.add{color:var(--muted);border-style:dashed}
+.note-bub.inline{max-width:100%;white-space:normal}
+.note-card{text-align:center;margin:8px 0}
+.note-card audio,.note-modal audio{width:100%;margin-top:8px}
+.note-modal .avatar{width:72px;height:72px;min-width:72px;font-size:28px;margin:0 auto}
+.note-big{text-align:center;font-size:18px;font-weight:700;margin:8px 0;word-break:break-word}
+.note-song{text-align:center;color:var(--accent2);font-size:13px}
+
+/* ===== NTalk: combined chats + all users list ===== */
+.sec-title{padding:12px 14px 4px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+
+/* ===== NTalk: hide the bottom bar while a chat is open (phones) ===== */
+@media(max-width:520px){
+  body.in-chat .sidebar{display:none}
+  body.in-chat .main{height:100dvh}
+}
+
+/* ===== NTalk: aligned status + note circles, shorts without bottom bar ===== */
+.st-row{align-items:flex-start}
+.st-row .st-item{padding-top:26px}
+.st-row .st-item .note-bub{position:absolute;top:0;left:50%;transform:translateX(-50%);max-width:84px;z-index:2}
+.st-row .st-item .st-plus{top:62px}
+body.in-chat .sidebar{display:none !important}
+@media(max-width:520px){
+  body.in-chat .main{height:100dvh !important}
+  .shorts{height:100dvh}
+}
