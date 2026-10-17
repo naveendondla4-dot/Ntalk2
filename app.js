@@ -181,7 +181,7 @@ async function doRegister(){
    .upsert({
     id:data.user.id,
     username,
-    full_name:name
+    display_name:name
    });
 
   if(pe)
@@ -203,12 +203,12 @@ async function loadProfile(user){
 
  const {data}=await sb
   .from("profiles")
-  .select("id,username,full_name,avatar_url")
+  .select("id,username,display_name,avatar_url")
   .eq("id",user.id)
   .maybeSingle();
 
  const fallbackName=
-  data?.full_name||
+  data?.display_name||
   data?.username||
   user.user_metadata?.display_name||
   user.email.split("@")[0];
@@ -237,12 +237,19 @@ async function logout(){
   if(signalChannel)
    await sb.removeChannel(signalChannel);
 
+  if(state.presence)
+   await sb.removeChannel(state.presence);
+
   await sb.auth.signOut();
  }catch{}
 
  state.user=null;
  state.chats=[];
  state.messages=[];
+ state.channel=null;
+ state.presence=null;
+ state.activeChat=null;
+ signalChannel=null;
  localStorage.removeItem("ntalk_user");
 
  endCall(false);
@@ -284,7 +291,13 @@ function ico(name,filled=false){
 
   theme:'<path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/>',
 
-  download:'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'
+  download:'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',
+
+  micoff:'<path d="M15 9.3V6a3 3 0 0 0-5.9-.8M9 9v2a3 3 0 0 0 4.7 2.5M5 11a7 7 0 0 0 11.2 5.6M19 11a7 7 0 0 1-.6 2.8M12 18v3M8 21h8M3 3l18 18"/>',
+
+  cameraoff:'<path d="M9 5h6l2 2h3a2 2 0 0 1 2 2v8M17 19H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1M10.6 10.6A3 3 0 0 0 14.4 14.4M3 3l18 18"/>',
+
+  file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/>'
  };
 
  const d=paths[name]||paths.chat;
@@ -358,6 +371,7 @@ function chatList(){
 <div class="search">
  ${ico("search")}
  <input
+  id="chatSearch"
   placeholder="Search people..."
   oninput="filterChats(this.value)"
  >
@@ -421,7 +435,7 @@ async function newChat(){
 
  const {data,error}=await sb
   .from("profiles")
-  .select("id,username,full_name,avatar_url")
+  .select("id,username,display_name,avatar_url")
   .eq("username",u)
   .maybeSingle();
 
@@ -433,9 +447,9 @@ async function newChat(){
  if(!c){
   c={
    user_id:data.id,
-   name:data.full_name||data.username,
+   name:data.display_name||data.username,
    username:"@"+data.username,
-   avatar:avatarName(data.full_name||data.username),
+   avatar:avatarName(data.display_name||data.username),
    online:false,
    msg:"Tap to chat",
    time:"now",
@@ -459,9 +473,9 @@ async function loadChats(){
 
  const {data,error}=await sb
   .from("profiles")
-  .select("id,username,full_name,avatar_url")
+  .select("id,username,display_name,avatar_url")
   .neq("id",uid())
-  .order("full_name");
+  .order("display_name");
 
  if(error){
   console.warn(error);
@@ -475,9 +489,9 @@ async function loadChats(){
   existing.get(p.id)||
   {
    user_id:p.id,
-   name:p.full_name||p.username,
+   name:p.display_name||p.username,
    username:"@"+p.username,
-   avatar:avatarName(p.full_name||p.username),
+   avatar:avatarName(p.display_name||p.username),
    online:false,
    msg:"Tap to chat",
    time:"",
@@ -490,6 +504,7 @@ async function loadChats(){
 
 async function openChat(i){
  state.activeChat=i;
+ if(state.chats[i])state.chats[i].unread=0;
  await loadMessages(state.chats[i]);
  render();
 }
@@ -521,7 +536,7 @@ function conversation(){
 
 <div>
  <b>${esc(c.name)}</b>
- <small>
+ <small id="chatStatus">
   ${c.typing?"typing…":c.online?"● Online":"Offline"}
  </small>
 </div>
@@ -584,37 +599,50 @@ function conversation(){
 </section>`;
 }
 
+const mediaCache=new Map();
+
+function parseMedia(m){
+ if(m.file_path)
+  return {path:m.file_path,name:m.file_name,type:m.mime_type||""};
+ return null;
+}
+
+async function signedUrl(path){
+ const hit=mediaCache.get(path);
+ if(hit&&hit.exp>Date.now())return hit.url;
+ const {data}=await sb.storage.from("ntalk-media").createSignedUrl(path,3600);
+ if(data?.signedUrl){
+  mediaCache.set(path,{url:data.signedUrl,exp:Date.now()+3300000});
+  return data.signedUrl;
+ }
+ return "";
+}
+
+async function hydrateMedia(){
+ const els=document.querySelectorAll("[data-media]");
+ for(const el of els){
+  const url=await signedUrl(el.dataset.media);
+  if(!url)continue;
+  if(el.tagName==="IMG")el.src=url;
+  else el.href=url;
+ }
+}
+
 function messageBubble(m){
 
+ const media=parseMedia(m);
+ const time=new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+ const tick=m.sender_id===uid()?(m.seen_at?"✓✓":m.delivered_at?"✓✓":"✓"):"";
+
+ const body=media
+  ?(media.type?.startsWith("image/")
+    ?`<a data-media="${esc(media.path)}" target="_blank" rel="noopener"><img class="media" data-media="${esc(media.path)}" alt="${esc(media.name||"image")}"></a>`
+    :`<a data-media="${esc(media.path)}" target="_blank" rel="noopener">${ico("file")} ${esc(media.name||"File")}</a>`)
+  :`<div>${esc(m.content)}</div>`;
+
  return `<div class="bubble ${m.sender_id===uid()?"me":"them"}">
-
- ${
-  m.file_url
-   ?
-   `<a href="${esc(m.file_url)}" target="_blank">
-    ${
-     m.file_type?.startsWith("image/")
-      ?
-      `<img class="media" src="${esc(m.file_url)}">`
-      :
-      `${ico("attach")} ${esc(m.file_name||"File")}`
-    }
-   </a>`
-   :
-   `<div>${esc(m.content)}</div>`
- }
-
- <small>
-  ${new Date(m.created_at).toLocaleTimeString(
-   [],
-   {
-    hour:"2-digit",
-    minute:"2-digit"
-   }
-  )}
-  ${m.sender_id===uid()?"✓✓":""}
- </small>
-
+ ${body}
+ <small>${time} ${tick}</small>
 </div>`;
 }
 
@@ -652,11 +680,20 @@ async function loadMessages(c) {
   }
 
   state.messages = data || [];
-  console.log("CHAT ID:", c.chat_id);
-  console.log("LOADED MESSAGES:", state.messages.length);
 
+  markSeen(c);
   render();
   scrollMessages();
+}
+
+async function markSeen(c){
+ if(!c?.chat_id)return;
+ const now=new Date().toISOString();
+ await sb.from("messages")
+  .update({seen_at:now,delivered_at:now})
+  .eq("chat_id",c.chat_id)
+  .neq("sender_id",uid())
+  .is("seen_at",null);
 }
 
 async function sendMessage(e){
@@ -678,8 +715,6 @@ async function sendMessage(e){
 
  if(!c.chat_id)
   return alert("Chat could not be created.");
- console.log("Receiver user ID:", c.user_id);
-console.log("Chat ID:", c.chat_id);
 
 const { data, error } = await sb
   .from("messages")
@@ -687,27 +722,18 @@ const { data, error } = await sb
     chat_id: c.chat_id,
     sender_id: uid(),
     content: text,
-    receiver_id: c.user_id,
-   
     message_type: "text"
   })
   .select()
   .single();
 
 if (error) {
-  alert(
-    "MESSAGE SAVE FAILED\n" +
-    "Code: " + error.code + "\n" +
-    "Error: " + error.message +
-    "\nDetails: " + error.details
-  );
+  alert("Message failed: " + error.message);
   console.error("MESSAGE INSERT ERROR:", error);
   return;
 }
 
-alert("MESSAGE SAVED\nID: " + data.id);
-
- state.messages.push(data);
+ if(!state.messages.some(x=>x.id===data.id))state.messages.push(data);
 
  c.msg=text;
  c.time="now";
@@ -751,51 +777,54 @@ async function uploadMedia(file){
  if(!file||!c||!hasSupabase)
   return;
 
- const ext=file.name.split(".").pop();
+ if(file.size>25*1024*1024)
+  return alert("File too large (max 25 MB).");
 
- const path=
-  `${uid()}/${crypto.randomUUID()}.${ext}`;
+ if(!c.chat_id)await loadMessages(c);
+ if(!c.chat_id)return alert("Chat could not be created.");
 
- const {error}=await sb
-  .storage
-  .from("ntalk-media")
-  .upload(
-   path,
-   file,
-   {
-    contentType:file.type,
-    upsert:false
-   }
-  );
+ const ext=(file.name.split(".").pop()||"bin").replace(/[^a-z0-9]/gi,"").slice(0,8)||"bin";
+ const path=`${uid()}/${crypto.randomUUID()}.${ext}`;
+
+ const {error}=await sb.storage.from("ntalk-media")
+  .upload(path,file,{contentType:file.type||"application/octet-stream",upsert:false});
 
  if(error)
-  return alert(error.message);
+  return alert("Upload failed: "+error.message);
 
- const {data}=sb
-  .storage
-  .from("ntalk-media")
-  .getPublicUrl(path);
+ const kind=file.type?.startsWith("image/")?"image":"file";
 
  const r=await sb
   .from("messages")
   .insert({
+   chat_id:c.chat_id,
    sender_id:uid(),
-   receiver_id:c.user_id,
    content:"",
-   file_url:data.publicUrl,
+   message_type:kind,
+   file_path:path,
    file_name:file.name,
-   file_type:file.type
+   mime_type:file.type||null,
+   file_size:file.size
   })
   .select()
   .single();
 
  if(r.error)
-  return alert(r.error.message);
+  return alert("Message failed: "+r.error.message);
 
- state.messages.push(r.data);
+ if(!state.messages.some(x=>x.id===r.data.id))state.messages.push(r.data);
+ c.msg=kind==="image"?"📷 Photo":"📎 "+file.name;
+ c.time="now";
+
+ const f=document.getElementById("file");
+ if(f)f.value="";
 
  render();
  scrollMessages();
+}
+
+function activeChatObj(){
+ return state.activeChat!==null?state.chats[state.activeChat]:null;
 }
 
 async function setupRealtime(){
@@ -806,49 +835,68 @@ async function setupRealtime(){
  if(state.channel)
   await sb.removeChannel(state.channel);
 
- const c=
-  state.chats[state.activeChat]?.user_id;
-
  state.channel=
   sb.channel("ntalk-user-"+uid())
 
+  // RLS only delivers rows from chats this user belongs to
   .on(
    "postgres_changes",
-   {
-    event:"INSERT",
-    schema:"public",
-    table:"messages",
-    filter:`receiver_id=eq.${uid()}`
-   },
+   {event:"INSERT",schema:"public",table:"messages"},
    async payload=>{
 
     const m=payload.new;
 
+    if(m.sender_id===uid())return;
+
     const chat=
-     state.chats.find(
-      x=>x.user_id===m.sender_id
-     );
+     state.chats.find(x=>x.chat_id&&x.chat_id===m.chat_id)||
+     state.chats.find(x=>x.user_id===m.sender_id);
 
-    if(chat&&m.sender_id===c){
+    if(!chat)return;
 
-     state.messages.push(m);
+    if(!chat.chat_id)chat.chat_id=m.chat_id;
 
-     await sb
-      .from("messages")
-      .update({
-       delivered_at:new Date().toISOString()
-      })
+    const media=parseMedia(m);
+    const preview=media?(media.type?.startsWith("image/")?"📷 Photo":"📎 "+(media.name||"File")):m.content;
+
+    if(chat===activeChatObj()){
+
+     if(!state.messages.some(x=>x.id===m.id))state.messages.push(m);
+
+     const now=new Date().toISOString();
+     await sb.from("messages")
+      .update({delivered_at:now,seen_at:now})
       .eq("id",m.id);
 
+     chat.msg=preview;
+     chat.time="now";
      render();
      scrollMessages();
 
-    }else if(chat){
+    }else{
 
      chat.unread=(chat.unread||0)+1;
-     chat.msg=m.content||"Media";
+     chat.msg=preview;
      chat.time="now";
 
+     await sb.from("messages")
+      .update({delivered_at:new Date().toISOString()})
+      .eq("id",m.id);
+
+     render();
+    }
+   }
+  )
+
+  // delivery / seen ticks for my own messages
+  .on(
+   "postgres_changes",
+   {event:"UPDATE",schema:"public",table:"messages"},
+   payload=>{
+    const m=payload.new;
+    const i=state.messages.findIndex(x=>x.id===m.id);
+    if(i>-1){
+     state.messages[i]={...state.messages[i],...m};
      render();
     }
    }
@@ -859,6 +907,8 @@ async function setupRealtime(){
    {event:"typing"},
    ({payload})=>{
 
+    if(payload.to!==uid())return;
+
     const chat=
      state.chats.find(
       x=>x.user_id===payload.from
@@ -868,11 +918,11 @@ async function setupRealtime(){
 
      chat.typing=payload.value;
 
-     if(
-      state.activeChat!==null &&
-      chat.user_id===c
-     ){
-      render();
+     // update only the status line, never re-render (keeps composer text)
+     if(chat===activeChatObj()){
+      const el=document.getElementById("chatStatus");
+      if(el)el.textContent=
+       chat.typing?"typing…":chat.online?"● Online":"Offline";
      }
     }
    }
@@ -903,21 +953,25 @@ function typingChanged(v){
 
  clearTimeout(state.typingTimer);
 
- notifyTyping(!!v);
-
- if(v){
-  state.typingTimer=
-   setTimeout(
-    ()=>notifyTyping(false),
-    1200
-   );
+ if(v&&!state.typing){
+  state.typing=true;
+  notifyTyping(true);
  }
+
+ state.typingTimer=
+  setTimeout(()=>{
+   state.typing=false;
+   notifyTyping(false);
+  },1500);
 }
 
 async function initPresence(){
 
  if(!hasSupabase||!uid())
   return;
+
+ if(state.presence)
+  await sb.removeChannel(state.presence);
 
  const ch=sb.channel(
   "ntalk-presence",
@@ -940,6 +994,7 @@ async function initPresence(){
    state.chats.forEach(
     c=>c.online=!!p[c.user_id]
    );
+   render();
   }
  )
  .on(
@@ -1016,7 +1071,7 @@ async function newCallTarget(type="voice"){
 
  const {data,error}=await sb
   .from("profiles")
-  .select("id,username,full_name")
+  .select("id,username,display_name")
   .eq("username",u)
   .maybeSingle();
 
@@ -1024,9 +1079,9 @@ async function newCallTarget(type="voice"){
 
  state.chats.unshift({
   user_id:data.id,
-  name:data.full_name||data.username,
+  name:data.display_name||data.username,
   username:"@"+data.username,
-  avatar:avatarName(data.full_name||data.username),
+  avatar:avatarName(data.display_name||data.username),
   online:false,
   msg:"Ready to call",
   time:"now",
@@ -1105,7 +1160,7 @@ async function startCall(type){
  if(!navigator.mediaDevices?.getUserMedia)
   return alert("Microphone/camera access is unavailable.");
 
- await beginLocalMedia(type);
+ if(!await beginLocalMedia(type))return;
 
  state.call={
   role:"caller",
@@ -1152,16 +1207,25 @@ async function startCall(type){
 }
 
 async function beginLocalMedia(type){
- localStream=await navigator.mediaDevices.getUserMedia({
-  audio:true,
-  video:type==="video"
- })
+ try{
+  localStream=await navigator.mediaDevices.getUserMedia({
+   audio:true,
+   video:type==="video"
+  });
+  return true;
+ }catch(e){
+  alert("Could not access microphone/camera: "+e.message);
+  return false;
+ }
 }
 
 async function onSignal(p){
 
  if(p.kind==="offer"){
-  if(state.call)return;
+  if(state.call){
+   await signal({kind:"reject",to:p.from});
+   return;
+  }
 
   state.call={
    role:"callee",
@@ -1180,9 +1244,9 @@ async function onSignal(p){
   await flushIce()
  }
 
- else if(p.kind==="ice"&&peer){
-  if(peer.remoteDescription)
-   await peer.addIceCandidate(p.candidate);
+ else if(p.kind==="ice"){
+  if(peer&&peer.remoteDescription)
+   await peer.addIceCandidate(p.candidate).catch(()=>{});
   else
    pendingIce.push(p.candidate)
  }
@@ -1195,7 +1259,7 @@ async function onSignal(p){
 async function acceptCall(){
  const c=state.call;
 
- await beginLocalMedia(c.type);
+ if(!await beginLocalMedia(c.type))return rejectCall();
 
  peer=new RTCPeerConnection(rtcConfig());
 
@@ -1239,8 +1303,8 @@ async function acceptCall(){
 }
 
 async function flushIce(){
- while(pendingIce.length)
-  await peer.addIceCandidate(pendingIce.shift())
+ while(pendingIce.length&&peer)
+  await peer.addIceCandidate(pendingIce.shift()).catch(()=>{})
 }
 
 function attachRemote(stream){
@@ -1429,10 +1493,7 @@ function toggleMute(btn){
  if(t&&btn){
   t.enabled=!t.enabled;
 
-  btn.innerHTML=ico(
-   "mic",
-   !t.enabled
-  );
+  btn.innerHTML=ico(t.enabled?"mic":"micoff");
 
   btn.classList.toggle(
    "muted",
@@ -1448,10 +1509,7 @@ function toggleCamera(btn){
  if(t&&btn){
   t.enabled=!t.enabled;
 
-  btn.innerHTML=ico(
-   "camera",
-   !t.enabled
-  );
+  btn.innerHTML=ico(t.enabled?"camera":"cameraoff");
 
   btn.classList.toggle(
    "muted",
@@ -1505,6 +1563,13 @@ function render(){
 
  document.body.dataset.theme=state.theme;
 
+ const oldMsg=document.getElementById("msg");
+ const keep=oldMsg
+  ?{v:oldMsg.value,f:document.activeElement===oldMsg}
+  :null;
+ const oldSearch=document.getElementById("chatSearch");
+ const keepQ=oldSearch?oldSearch.value:"";
+
  if(!state.user){
   app.innerHTML=loginView();
   return
@@ -1541,6 +1606,15 @@ function render(){
    </main>
   </div>`;
 
+ const nm=document.getElementById("msg");
+ if(nm&&keep){
+  nm.value=keep.v;
+  if(keep.f)nm.focus();
+ }
+ const ns=document.getElementById("chatSearch");
+ if(ns&&keepQ){ns.value=keepQ;filterChats(keepQ)}
+
+ hydrateMedia();
  scrollMessages()
 }
 
@@ -1560,6 +1634,9 @@ window.addEventListener(
    if(data.session){
     await loadProfile(data.session.user);
     await initBackend()
+   }else if(state.user){
+    state.user=null;
+    localStorage.removeItem("ntalk_user");
    }
   }
 
